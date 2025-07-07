@@ -1,14 +1,34 @@
 import express from "express";
+import fs from "fs";
 
 const server = express();
 const PORT = 8080;
 
 server.use(express.json());
 
+const PRODUCTS_FILE = '../DATA/products.json';
+const CARTS_FILE = '../DATA/carts.json';
+
 const products = [];
 const carts = [];
 let productId = 1;
 let cartId = 1;
+
+const loadData = () => {
+    if (fs.existsSync(PRODUCTS_FILE)) {
+        products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
+        productId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    }
+
+    if (fs.existsSync(CARTS_FILE)) {
+        carts = JSON.parse(fs.readFileSync(CARTS_FILE));
+        cartId = carts.length > 0 ? Math.max(...carts.map(c => c.id)) + 1 : 1;
+    }
+};
+
+const saveProducts = () => fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+const saveCarts = () => fs.writeFileSync(CARTS_FILE, JSON.stringify(carts, null, 2));
+loadData();
 
 // Rutas para Manejo de Productos
 server.get('/api/products/', (req, res) => {
@@ -36,6 +56,7 @@ server.post('/api/products/', (req, res) => {
         thumbnails
     };
     products.push(newProduct);
+    saveProducts();
     res.status(201).json(newProduct);
 });
 
@@ -50,6 +71,7 @@ server.put('/api/products/:pid', (req, res) => {
         if (stock !== undefined) product.stock = stock;
         if (thumbnails !== undefined) product.thumbnails = thumbnails;
         res.json(product);
+        saveProducts();
     } else {
         res.status(404).send('Producto no encontrado');
     }
@@ -59,6 +81,7 @@ server.delete('/api/products/:pid', (req, res) => {
     const index = products.findIndex(p => p.id === parseInt(req.params.pid));
     if (index !== -1) {
         products.splice(index, 1);
+        saveProducts();
         res.status(204).send("Producto Borrado Correctamente");
     } else {
         res.status(404).send('Producto no encontrado');
@@ -72,6 +95,7 @@ server.post('/api/carts/', (req, res) => {
         products: []
     };
     carts.push(newCart);
+    saveCarts();
     res.status(201).send("Nuevo Carrito Creado");
 });
 
@@ -110,6 +134,7 @@ server.post('/api/carts/:cid/product/:pid', (req, res) => {
     } else {
         cart.products.push({ product: product.id, quantity: 1 });
     }
+    saveCarts();
     res.status(200).json(cart);
 });
 
