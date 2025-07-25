@@ -6,29 +6,37 @@ import http from "http";
 import { Server } from "socket.io";
 import fs from "fs/promises";
 import mongoose from "mongoose";
+import ProductsModel from "./models/products.model.js";
  
 const app = express();
 const serverHttp = http.createServer(app)
 const io = new Server(serverHttp)
 
-let productList = [];
 
-io.on("connection", (socket) => {
+io.on("connection",async (socket) => {
+  let productList = await ProductsModel.find();
   console.log("Nuevo cliente conectado: " + socket.id);
 
   socket.emit("products", productList);
 
   socket.on("addProduct", async (prod) => {
-    prod.id = productList.length+1;
-    productList.push(prod);
-    await saveProducts();
+    const newProduct = ProductsModel(prod);
+    await newProduct.save();
     io.emit("products", productList);
   });
 
   socket.on("deleteProduct", async (id) => {
-    productList = productList.filter((p) => parseInt(p.id) !== parseInt(id));
-    await saveProducts();
-    io.emit("products", productList);
+    // productList = productList.filter((p) => parseInt(p.id) !== parseInt(id));
+    // await saveProducts();
+    // io.emit("products", productList);
+
+    try {
+        const productList = await ProductsModel.findByIdAndDelete(id);
+        io.emit("products", productList)
+    } catch (e) {
+        console.error({ message: e.message });
+        res.status(500).json({ status: "Internal server error", message: "View console" });
+    }
   });
 });
 

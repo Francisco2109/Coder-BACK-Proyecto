@@ -7,9 +7,12 @@
   <p><strong>Categoría:</strong> {{product.category}}</p>
 
   <form action="/api/carts/{{cartId}}/product/{{product._id}}" method="POST">
-    <button type="submit">Agregar al carrito 🛒</button>
+    <button type="submit">Agregar al carrito</button>
   </form>
 </div>
 
 <br />
 <a href="/products"><button>← Volver a productos</button></a>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/main.js"></script>
