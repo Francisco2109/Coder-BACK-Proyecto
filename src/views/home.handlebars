@@ -1,6 +1,26 @@
-<h1>Lista de productos</h1>
-<ul>
+<h1>Productos disponibles</h1>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px;">
   {{#each products}}
-    <li>{{this.title}} - ${{this.price}}</li>
+    <div style="border: 1px solid #ccc; padding: 10px; width: 250px; border-radius: 8px;">
+      <h3>{{this.title}}</h3>
+      <p><strong>Precio:</strong> ${{this.price}}</p>
+      <p><strong>Categoría:</strong> {{this.category}}</p>
+      <a href="/products/{{this._id}}">
+        <button>Ver detalle</button>
+      </a>
+    </div>
   {{/each}}
-</ul>
+</div>
+
+<div style="margin-top: 20px;">
+  {{#if hasPrevPage}}
+    <a href="?page={{prevPage}}"><button>← Anterior</button></a>
+  {{/if}}
+
+  <span>Página {{page}} de {{totalPages}}</span>
+
+  {{#if hasNextPage}}
+    <a href="?page={{nextPage}}"><button>Siguiente →</button></a>
+  {{/if}}
+</div>

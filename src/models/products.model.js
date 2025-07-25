@@ -37,8 +37,6 @@ mongoosePaginate.paginate.options = {
     pagingCounter: false,
     totalDocs: false,
     limit: false,
-    prevPage: "prevLink",
-    nextPage: "nextLink"
   }
 }
 
