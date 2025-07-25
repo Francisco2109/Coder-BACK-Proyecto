@@ -1,88 +1,102 @@
-import fs from "fs";
 import { Router } from "express";
 import io from "../app.js";
+import ProductsModel from "../models/products.model.js";
+import { PaginationParameters } from "mongoose-paginate-v2"
 
-const productRouter = Router();  
+const productRouter = Router();
 
-let productList = [];
-let productId = 1;
+// async function updateProducts(){
+//     try {
+//         const allProducts = await ProductsModel.paginate();
+//         io.emit("products", allProducts);
+//         return allProducts
+//     } catch (e) {
+//         console.error({ message: e.message });
+//         return;
+//     }
+// }
 
-const PRODUCTS_FILE = './data/products.json';
+productRouter.get('/',async (req, res) => {
+    try {
+        const parsedQuery = new PaginationParameters(req)
+        console.log(parsedQuery)
+        const queries = parsedQuery.get()
+        console.log(queries)
+        const result = await ProductsModel.paginate(...queries);
 
-const loadData = () => {
-    if (!fs.existsSync("./data")) {
-        fs.mkdirSync("./data", { recursive: true });
+        const baseUrl = req.protocol + "://" + req.get("host") + req.path;
+        const generateLink = (targetPage) => {
+        const options = new URLSearchParams();
+            options.append("page", targetPage);
+            options.append("limit", queries[1].limit);
+            if (queries[1].sort) {
+                options.append("sort", queries[1].sort);
+            }
+            if (queries[0].query) {
+                options.append("query", queries[0].query);
+            }
+            return `${baseUrl}api/products?${options.toString()}`;
+        };
+        result.prevLink = result.hasPrevPage ? generateLink(result.page - 1) : null;
+        result.nextLink = result.hasNextPage ? generateLink(result.page + 1) : null;
+        console.log(result.page)
+        res.json({status: "success",result});
+    } catch (e) {
+        console.error({ message: e.message });
+        res.status(500).json({ status: "Internal server error", message: "View console" });
+    }
+});
+
+productRouter.get('/:pid',async (req, res) => {
+    try {
+        const { pid } = req.params;
+        const product = await ProductsModel.findById({ _id: pid });
+        res.json({ status: "success", product });
+    } catch (e) {
+        console.error({ message: e.message });
+        res.status(500).json({ status: "Internal server error", message: "View console" });
+    }
+});
+
+productRouter.post('/',async (req, res) => {
+    try {
+        req.body.price = parseFloat(req.body.price);
+        req.body.stock = parseInt(req.body.stock);
+        const newProduct = ProductsModel(req.body);
+        await newProduct.save();
+        res.json({ status: "product created", new_product: newProduct });
+    } catch (e) {
+        console.error({ message: e.message });
+        res.status(500).json({ status: "Internal server error", message: "View console" });
+    }
+});
+
+productRouter.put('/:pid',async (req, res) => {
+    try {
+        const { pid } = req.params;
+        const { body } = req;
+        if (body.price){
+            body.price = parseFloat(body.price)
         }
-        if (!fs.existsSync(PRODUCTS_FILE)) {
-        fs.writeFileSync(PRODUCTS_FILE, '[]');
+        if (body.stock){
+            body.stock = parseInt(body.stock)
         }
-    if (fs.existsSync(PRODUCTS_FILE)) {
-        productList = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-        productId = productList.length > 0 ? Math.max(...productList.map(p => p.id)) + 1 : 1;
-    }
-};
-loadData();
-
-const saveProducts = () => fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(productList, null, 2));
-
-productRouter.get('/', (req, res) => {
-    res.json(productList);
-});
-
-productRouter.get('/:pid', (req, res) => {
-    const product = productList.find(p => p.id === parseInt(req.params.pid));
-    if (product) {
-        res.json(product);
-    } else {
-        res.status(404).send('Producto no encontrado');
+        let response = await ProductsModel.updateOne({ _id: pid } , { $set: { ...body } },);
+        res.json({ status: "product updated", response });
+    } catch (e) {
+        console.error({ message: e.message });
+        res.status(500).json({ status: "Internal server error", message: "View console" });
     }
 });
 
-productRouter.post('/', (req, res) => {
-    const { title, description, code, price,  stock,  thumbnails } = req.body;
-    const newProduct = {
-        id: productId++,
-        title,
-        description,
-        code,
-        price,
-        stock,
-        thumbnails
-    };
-    productList.push(newProduct);
-    saveProducts();
-    io.emit("products", productList);
-
-    res.status(201).json(newProduct);
-});
-
-productRouter.put('/:pid', (req, res) => {
-    const product = productList.find(p => p.id === parseInt(req.params.pid));
-    if (product) {
-        const { title, description, code, price, stock, thumbnails } = req.body;
-        if (title !== undefined) product.title = title;
-        if (description !== undefined) product.description = description;
-        if (code !== undefined) product.code = code;
-        if (price !== undefined) product.price = price;
-        if (stock !== undefined) product.stock = stock;
-        if (thumbnails !== undefined) product.thumbnails = thumbnails;
-        res.json(product);
-        saveProducts();
-        io.emit("products", productList);
-    } else {
-        res.status(404).send('Producto no encontrado');
-    }
-});
-
-productRouter.delete('/:pid', (req, res) => {
-    const index = productList.findIndex(p => p.id === parseInt(req.params.pid));
-    if (index !== -1) {
-        productList.splice(index, 1);
-        saveProducts();
-        io.emit("products", productList);
-        res.status(204).send("Producto Borrado Correctamente");
-    } else {
-        res.status(404).send('Producto no encontrado');
+productRouter.delete('/:pid',async (req, res) => {
+    try {
+        const { pid } = req.params;
+        const response = await ProductsModel.findByIdAndDelete(pid);
+        res.json({ status: "product deleted", response });
+    } catch (e) {
+        console.error({ message: e.message });
+        res.status(500).json({ status: "Internal server error", message: "View console" });
     }
 });
 

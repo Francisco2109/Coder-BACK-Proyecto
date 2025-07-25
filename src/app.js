@@ -5,37 +5,13 @@ import hbs from "express-handlebars";
 import http from "http";
 import { Server } from "socket.io";
 import fs from "fs/promises";
+import mongoose from "mongoose";
  
 const app = express();
 const serverHttp = http.createServer(app)
 const io = new Server(serverHttp)
 
 let productList = [];
-
-const loadProducts = async () => {
-  try {
-    const data = await fs.readFile("data/products.json", "utf-8");
-    productList = JSON.parse(data);
-    console.log("Productos cargados:", productList.length);
-  } catch (err) {
-    if (err.code === "ENOENT") {
-      console.log("Archivo products.json no encontrado. Se creará uno nuevo al guardar.");
-    } else {
-      console.error("Error leyendo products.json:", err);
-    }
-    productList = [];
-  }
-};
-
-const saveProducts = async () => {
-  try {
-    await fs.writeFile("data/products.json",JSON.stringify( productList, null, 2));
-    console.log("Productos guardados en archivo.");
-  } catch (err) {
-    console.error("Error escribiendo archivo:", err);
-  }
-};
-
 
 io.on("connection", (socket) => {
   console.log("Nuevo cliente conectado: " + socket.id);
@@ -56,6 +32,13 @@ io.on("connection", (socket) => {
   });
 });
 
+// mongoose.connect("mongodb+srv://admin-user:<B4YW5GZcy8iGuzH3>@cluster0.8ysuhwr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+// .then(() => console.log("MongoDB connected success"))
+// .catch((e) => console.error("MongoDB Error: \n" + e))
+
+mongoose.connect("mongodb://127.0.0.1:27017/colegio")
+.then(() => console.log("MongoDB connected success"))
+.catch((e) => console.error("MongoDB Error: \n" + e))
 
 // CONFIGURACION DE HANDLEBARS
 app.engine("handlebars", hbs.engine());  // 1. implementamos el motor
@@ -72,11 +55,14 @@ app.use("/", viewRouter);
 
 // Servidor escuchando en puerto 8080
 
-loadProducts().then(() => {
+// loadProducts().then(() => {
+// serverHttp.listen(8080, () => {
+//     console.log(`Servidor escuchando en localhost:8080}`);
+// });
+// });
+
 serverHttp.listen(8080, () => {
     console.log(`Servidor escuchando en localhost:8080}`);
 });
-});
-
 
 export default io;
