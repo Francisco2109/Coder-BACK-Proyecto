@@ -8,7 +8,7 @@ socket.on("products", (products) => {
     const li = document.createElement("li");
     li.dataset.id = prod._id;
     li.innerHTML = `
-      Code: ${prod.code} - ${prod.title} - $${prod.price} - Stock:${prod.stock}
+      Code: ${prod.code} - ${prod.title} - $${prod.category} - $${prod.price} - Stock:${prod.stock}
       <button onclick="deleteProduct('${prod._id}')">Eliminar</button>
     `;
     productList.appendChild(li);

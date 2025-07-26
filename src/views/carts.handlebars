@@ -1,0 +1,20 @@
+<h1>Productos en el carrito</h1>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px;">
+  {{#each products}}
+    <div style="border: 1px solid #ccc; padding: 10px; width: 250px; border-radius: 8px;">
+      <h3>{{this.title}}</h3>
+      <p><strong>Precio:</strong> ${{this.price}}</p>
+      <p><strong>Categoría:</strong> {{this.category}}</p>
+      <p><strong>Cantidad:</strong> {{this.quantity}}</p>
+      <a href="/products/{{this.id}}">
+        <button>Ver detalle</button>
+      </a>
+    </div>
+  {{/each}}
+</div>
+
+<br>
+<a href="/realtimeproducts"><button>Menú de Productos</button></a>
+<br>
+<a href="/products"><button>Lista de Productos</button></a>

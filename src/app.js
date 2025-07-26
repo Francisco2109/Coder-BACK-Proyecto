@@ -73,12 +73,10 @@ io.on("connection",async (socket) => {
       if (cartProduct){
         cartProduct.quantity ++;
         await cart.save();
-        console.log(cart)
         socket.emit("cartUpdated", cart);
       }else{
         cart.products.push({ product: pid, quantity: 1 });
         await cart.save();
-        console.log(cart)
         socket.emit("cartUpdated", cart);
       }
     } catch (e) {
@@ -87,13 +85,13 @@ io.on("connection",async (socket) => {
   })
 });
 
-// mongoose.connect("mongodb+srv://admin-user:<B4YW5GZcy8iGuzH3>@cluster0.8ysuhwr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-// .then(() => console.log("MongoDB connected success"))
-// .catch((e) => console.error("MongoDB Error: \n" + e))
-
-mongoose.connect("mongodb://127.0.0.1:27017/colegio")
+mongoose.connect("mongodb+srv://admin-user:B4YW5GZcy8iGuzH3@cluster0.8ysuhwr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 .then(() => console.log("MongoDB connected success"))
 .catch((e) => console.error("MongoDB Error: \n" + e))
+
+// mongoose.connect("mongodb://127.0.0.1:27017/colegio")
+// .then(() => console.log("MongoDB connected success"))
+// .catch((e) => console.error("MongoDB Error: \n" + e))
 
 // CONFIGURACION DE HANDLEBARS
 app.engine("handlebars", hbs.engine());  // 1. implementamos el motor
