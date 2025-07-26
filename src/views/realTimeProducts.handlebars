@@ -1,8 +1,4 @@
-<h1>Productos en Tiempo Real</h1>
-
-<ul id="productList">
-  <p>Cargando productos...</p>
-</ul>
+<h1>Administrar Productos</h1>
 
 <form id="productForm">
   <label for="title">Título:</label>
@@ -23,5 +19,11 @@
   <button type="submit">Agregar Producto</button>
 </form>
 
+<ul id="productList">
+  <p>Cargando productos...</p>
+</ul>
+
+<a href="/products"><button>← Volver a productos</button></a>
+
 <script src="/socket.io/socket.io.js"></script>
-<script src="/main.js"></script>
+<script src="/realTimeProducts.js"></script>

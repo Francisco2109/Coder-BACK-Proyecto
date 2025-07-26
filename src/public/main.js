@@ -1,36 +1,37 @@
 const socket = io();
+const form = document.getElementById("productForm");
+const cartControls = document.getElementById("cartControls");
+let cartId = null;
 
-  const form = document.getElementById("productForm");
-  const productList = document.getElementById("productList");
+document.getElementById("createCartBtn").addEventListener("click", () => {
+  socket.emit("newCart");
+});
 
-  socket.on("products", (products) => {
-      productList.innerHTML = "";
-      products.forEach((prod) => {
-        const li = document.createElement("li");
-        li.dataset.id = prod.id;
-        li.innerHTML = `
-        ${prod.title} - $${prod.price} <button onclick="deleteProduct('${prod.id}')">Eliminar</button>
-        `;
-        productList.appendChild(li);
-      });
-    });
+socket.on("cartCreated", (id) => {
+  cartId = id;
+  cartControls.innerHTML = `<button id="deleteCartBtn">Eliminar carrito</button>`;
+  document.getElementById("deleteCartBtn").addEventListener("click", () => {
+    socket.emit("delCart", cartId);
+  });
+});
 
-  form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
-      const product = {
-        id: -1,
-        title: formData.get("title"),
-        description: formData.get("description"),
-        code: formData.get("code"),
-        price: parseFloat(formData.get("price")),
-        stock: parseInt(formData.get("stock")),
-        thumbnails: "" 
-      };
-      socket.emit("addProduct", product);
-      form.reset();
-    });
+socket.on("cartDeleted", () => {
+  cartId = null;
+  cartControls.innerHTML = `<button id="createCartBtn">Crear carrito</button>`;
+  document.getElementById("createCartBtn").addEventListener("click", () => {
+    socket.emit("newCart");
+  });
+});
 
-  function deleteProduct(id) {
-      socket.emit("deleteProduct", id);
-  }
+document.querySelectorAll(".add-to-cart").forEach(button => {
+  button.addEventListener("click", () => {
+    const productId = button.dataset.id;
+
+    if (!cartId) {
+      alert("Primero debes crear un carrito");
+      return;
+    }
+    console.log(productId)
+    socket.emit("addToCart", productId.toString(), cartId);
+  });
+});

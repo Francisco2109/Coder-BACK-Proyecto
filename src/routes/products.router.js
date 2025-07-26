@@ -1,4 +1,4 @@
-import { Router } from "express";
+import e, { Router } from "express";
 import io from "../app.js";
 import ProductsModel from "../models/products.model.js";
 import { PaginationParameters } from "mongoose-paginate-v2"
@@ -19,9 +19,7 @@ const productRouter = Router();
 productRouter.get('/',async (req, res) => {
     try {
         const parsedQuery = new PaginationParameters(req)
-        console.log(parsedQuery)
         const queries = parsedQuery.get()
-        console.log(queries)
         const result = await ProductsModel.paginate(...queries);
 
         const baseUrl = req.protocol + "://" + req.get("host") + req.path;
@@ -39,7 +37,6 @@ productRouter.get('/',async (req, res) => {
         };
         result.prevLink = result.hasPrevPage ? generateLink(result.page - 1) : null;
         result.nextLink = result.hasNextPage ? generateLink(result.page + 1) : null;
-        console.log(result.page)
         res.json({status: "success",result});
     } catch (e) {
         console.error({ message: e.message });
@@ -51,6 +48,9 @@ productRouter.get('/:pid',async (req, res) => {
     try {
         const { pid } = req.params;
         const product = await ProductsModel.findById({ _id: pid });
+        if (!product){
+            return res.status(404).json({ status: "error", message: "Product not found" });
+        }
         res.json({ status: "success", product });
     } catch (e) {
         console.error({ message: e.message });
@@ -64,6 +64,8 @@ productRouter.post('/',async (req, res) => {
         req.body.stock = parseInt(req.body.stock);
         const newProduct = ProductsModel(req.body);
         await newProduct.save();
+        const allProducts = await ProductsModel.find();
+        io.emit("products", allProducts);
         res.json({ status: "product created", new_product: newProduct });
     } catch (e) {
         console.error({ message: e.message });
@@ -82,6 +84,8 @@ productRouter.put('/:pid',async (req, res) => {
             body.stock = parseInt(body.stock)
         }
         let response = await ProductsModel.updateOne({ _id: pid } , { $set: { ...body } },);
+        const allProducts = await ProductsModel.find();
+        io.emit("products", allProducts);
         res.json({ status: "product updated", response });
     } catch (e) {
         console.error({ message: e.message });
@@ -93,6 +97,8 @@ productRouter.delete('/:pid',async (req, res) => {
     try {
         const { pid } = req.params;
         const response = await ProductsModel.findByIdAndDelete(pid);
+        const allProducts = await ProductsModel.find();
+        io.emit("products", allProducts);
         res.json({ status: "product deleted", response });
     } catch (e) {
         console.error({ message: e.message });

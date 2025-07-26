@@ -12,6 +12,9 @@ cartsRouter.get('/:cid',async (req, res) => {
     try {
         const { cid } = req.params;
         const cart = await CartsModel.findById({ _id: cid }).populate("products.product");
+        if (!cart){
+            return res.status(404).json({ status: "error", message: "Cart not found" });
+        }
         res.json({ status: "success", cart });
     } catch (e) {
         console.error({ message: e.message });

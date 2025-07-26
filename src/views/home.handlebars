@@ -1,5 +1,9 @@
 <h1>Productos disponibles</h1>
 
+<div id="cartControls" style="margin-bottom: 20px;">
+  <button id="createCartBtn">Crear carrito</button>
+</div>
+
 <div style="display: flex; flex-wrap: wrap; gap: 16px;">
   {{#each products}}
     <div style="border: 1px solid #ccc; padding: 10px; width: 250px; border-radius: 8px;">
@@ -9,9 +13,13 @@
       <a href="/products/{{this._id}}">
         <button>Ver detalle</button>
       </a>
+      <button class="add-to-cart" data-id="{{this._id}}" style="margin-top: 8px;">Agregar al carrito</button>
     </div>
   {{/each}}
 </div>
+
+<br>
+<a href="/realtimeproducts"><button>Menu de Productos</button></a>
 
 <div style="margin-top: 20px;">
   {{#if hasPrevPage}}
@@ -24,3 +32,6 @@
     <a href="?page={{nextPage}}"><button>Siguiente →</button></a>
   {{/if}}
 </div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/main.js"></script>

@@ -4,40 +4,87 @@ import viewRouter from "./routes/views.router.js";
 import hbs from "express-handlebars";
 import http from "http";
 import { Server } from "socket.io";
-import fs from "fs/promises";
 import mongoose from "mongoose";
 import ProductsModel from "./models/products.model.js";
+import CartsModel from "./models/carts.model.js";
  
 const app = express();
 const serverHttp = http.createServer(app)
 const io = new Server(serverHttp)
 
+let cart = CartsModel();
 
 io.on("connection",async (socket) => {
-  let productList = await ProductsModel.find();
+  try {
+    const productList = await ProductsModel.find();
+    socket.emit("products", productList);
+  } catch (e) {
+    console.error({ message: e.message });
+  }
   console.log("Nuevo cliente conectado: " + socket.id);
 
-  socket.emit("products", productList);
+  socket.on("addProduct", async (product) => {
+    try {
+      const newProduct = new ProductsModel(product);
+      await newProduct.save();
 
-  socket.on("addProduct", async (prod) => {
-    const newProduct = ProductsModel(prod);
-    await newProduct.save();
-    io.emit("products", productList);
+      const productList = await ProductsModel.find();
+      io.emit("products", productList);
+    } catch (e) {
+      console.error("Error al agregar producto:", e.message);
+    }
   });
 
-  socket.on("deleteProduct", async (id) => {
-    // productList = productList.filter((p) => parseInt(p.id) !== parseInt(id));
-    // await saveProducts();
-    // io.emit("products", productList);
-
+  socket.on("deleteProduct", async (pid) => {
     try {
-        const productList = await ProductsModel.findByIdAndDelete(id);
+        await ProductsModel.findByIdAndDelete(pid);
+        const productList = await ProductsModel.find();
         io.emit("products", productList)
     } catch (e) {
         console.error({ message: e.message });
-        res.status(500).json({ status: "Internal server error", message: "View console" });
     }
   });
+  socket.on("newCart", async () => {
+    try {
+      const newCart = CartsModel();
+      await newCart.save();
+      cart = newCart;
+      io.emit("cartCreated", cart._id);
+    } catch (e) {
+        console.error({ message: e.message });
+    }
+  });
+
+  socket.on("delCart", async (cid) => {
+    try {
+        await CartsModel.findByIdAndDelete(cid);
+        cart = {}
+        io.emit("cartDeleted")
+    } catch (e) {
+        console.error({ message: e.message });
+    }
+  });
+  
+  socket.on("addToCart", async (pid, cid)=>{
+    try {
+      const cart = await CartsModel.findById(cid);
+      if (!cart) return;
+      const cartProduct = cart.products.find(p => p.product._id.toString() === pid);
+      if (cartProduct){
+        cartProduct.quantity ++;
+        await cart.save();
+        console.log(cart)
+        socket.emit("cartUpdated", cart);
+      }else{
+        cart.products.push({ product: pid, quantity: 1 });
+        await cart.save();
+        console.log(cart)
+        socket.emit("cartUpdated", cart);
+      }
+    } catch (e) {
+      console.error({ message: e.message });
+    }
+  })
 });
 
 // mongoose.connect("mongodb+srv://admin-user:<B4YW5GZcy8iGuzH3>@cluster0.8ysuhwr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
