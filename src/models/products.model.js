@@ -11,7 +11,7 @@ const productsSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    category: { //TODO
+    category: { 
         type: String,
         required: true
     },

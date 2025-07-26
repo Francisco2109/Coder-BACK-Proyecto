@@ -8,7 +8,7 @@ socket.on("products", (products) => {
     const li = document.createElement("li");
     li.dataset.id = prod._id;
     li.innerHTML = `
-      Code: ${prod.code} - ${prod.title} - $${prod.category} - $${prod.price} - Stock:${prod.stock}
+      Code: ${prod.code} - ${prod.title} - ${prod.category} - $${prod.price} - Stock:${prod.stock}
       <button onclick="deleteProduct('${prod._id}')">Eliminar</button>
     `;
     productList.appendChild(li);
@@ -21,6 +21,7 @@ form.addEventListener("submit", (e) => {
   const product = {
     title: formData.get("title"),
     description: formData.get("description"),
+    category: formData.get("category"),
     code: formData.get("code"),
     price: parseFloat(formData.get("price")),
     stock: parseInt(formData.get("stock")),
